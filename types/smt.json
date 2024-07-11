@@ -1,0 +1,63 @@
+{
+  "name": "BotName",
+  "description": "Description of the bot",
+  "settings": {
+    "timezone": "UTC",
+    "language": "en"
+  },
+  "triggers": [
+    {
+      "type": "schedule",
+      "interval": {
+        "repeated": true,
+        "frequency": "daily",
+        "time": "09:00"
+      }
+    },
+    {
+      "type": "onMessage",
+      "pattern": "message"
+    },
+    {
+      "type": "command",
+      "command": "/help"
+    },
+    {
+      "type": "event",
+      "event": "newOrderReceived"
+    },
+    {
+      "type": "data",
+      "source": "salesData",
+      "threshold": 1000
+    }
+  ],
+  "actions": {
+    "sendWeatherForecast": {
+      "type": "message",
+      "text": "Today's weather forecast is sunny!"
+    },
+    "displayHelpMenu": {
+      "type": "message",
+      "text": "Here are some available commands: ..."
+    },
+    "processOrder": {
+      "type": "message",
+      "text": "New order received! Processing..."
+    },
+    "notifySalesTeam": {
+      "type": "message",
+      "text": "Sales threshold exceeded! Notify the sales team."
+    },
+    "sendSpecialOffer": {
+      "type": "message",
+      "text": "Exclusive special offer for you!"
+    }
+  },
+  "connections": [
+    {
+      "to": "socialMedia",
+      "key": "someKey"
+    }
+  ]
+}
