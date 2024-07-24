@@ -8,6 +8,7 @@ export const initialNodes = [
     type: "position-logger",
     position: { x: -100, y: 100 },
     data: { label: "drag me!" },
+    selectable: true,
   },
   { id: "c", position: { x: 100, y: 100 }, data: { label: "your ideas" } },
   {

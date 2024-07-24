@@ -7,7 +7,7 @@ export const UtilityBar = () => {
   const { nodes, setNodes } = useNodesContext();
 
   const handleCreateElement = (NodeType: string) => {
-    CreateElement({ typeOfNode: NodeType, setNodes, nodes: nodes });
+    CreateElement({ typeOfNode: NodeType, setNodes, nodes });
   };
   return (
     <Panel position="top-left">
@@ -34,7 +34,7 @@ export const UtilityBar = () => {
           className="bg-red-400 p-2 rounded-md text-white font-bold "
           onClick={() => handleCreateElement("")}
         >
-          click to add 
+          click to add
         </button>
       </div>
     </Panel>

@@ -1,5 +1,10 @@
-'use client'
-import React, { createContext, useContext, useCallback, ReactNode } from "react";
+"use client";
+import React, {
+  createContext,
+  useContext,
+  useCallback,
+  ReactNode,
+} from "react";
 import { useNodesState, NodeChange, Node } from "reactflow";
 import { initialNodes } from "@/components/nodes";
 
@@ -14,9 +19,12 @@ const NodesContext = createContext<NodesContextType | undefined>(undefined);
 export const NodesProvider = ({ children }: { children: ReactNode }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
 
-  const handleNodesChange = useCallback((changes: NodeChange[]) => {
-    onNodesChange(changes);
-  }, [onNodesChange]);
+  const handleNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      onNodesChange(changes);
+    },
+    [onNodesChange]
+  );
 
   return (
     <NodesContext.Provider value={{ nodes, setNodes, handleNodesChange }}>

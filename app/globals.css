@@ -7,4 +7,8 @@
   .text-balance {
     text-wrap: balance;
   }
+  .react-flow__node.selected{
+     border-color: blue;
+  }
 }
+
