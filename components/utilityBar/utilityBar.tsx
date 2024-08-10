@@ -28,7 +28,7 @@ export const UtilityBar = () => {
           className="bg-red-400 p-2 rounded-md text-white font-bold "
           onClick={() => handleCreateElement("position-logger")}
         >
-          click to add elements
+          share room 
         </button>
         <button
           className="bg-red-400 p-2 rounded-md text-white font-bold "

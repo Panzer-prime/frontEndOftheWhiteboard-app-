@@ -1,180 +1,162 @@
-// /App.tsx
 "use client";
+import { ConnectOnSocket } from "@/utils/sockets/connectOnSocket";
+import React, { useState } from "react";
+import { FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import axios, { AxiosError, AxiosHeaders } from "axios";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  ReactFlow,
-  SelectionMode,
-  NodeChange,
-  Background,
-  Controls,
-  MiniMap,
-  Node,
-  NodeMouseHandler,
-  ReactFlowProvider,
-  useReactFlow,
-} from "reactflow";
-import "reactflow/dist/style.css";
-import { initialNodes, nodeTypes } from "@/components/nodes";
-import { UtilityBar } from "@/components/utilityBar/utilityBar";
-import { useNodesContext } from "@/context/nodesProvider";
-import { useSocket } from "@/hooks/usePositionTransfer";
-import SetMenu from "@/components/nodeMenu/setMenu";
 
-const panOnDrag = [1, 2];
+const { socket } = ConnectOnSocket();
 
-type ContextMenuProps = {
-  id: string;
-  top: number | false;
-  left: number | false;
-  right: number | false;
-  bottom: number | false;
-};
+function App() {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const token = localStorage.getItem("token");
 
-const App: React.FC = () => {
-  const { nodes, setNodes, handleNodesChange } = useNodesContext();
-  const { isServerUpdate, emitNodeChange, socket } = useSocket(setNodes);
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [contextMenu, setContextMenu] = useState<ContextMenuProps | null>(null);
+  const handleRoomJoin = async (event: FormEvent) => {
+    event.preventDefault();
+    const formData = new FormData(event.target as HTMLFormElement);
+    const roomName = formData.get("roomName") as string;
+    const getRoomPass = formData.get("RoomPass") as string;
 
-  //updating the position of the nodes sending it to the server
-  const onNodesChange = (changes: NodeChange[]) => {
-    if (isServerUpdate.current) {
-      isServerUpdate.current = false;
-      return;
-    }
-    handleNodesChange(changes);
-    const changedNode = changes[0];
-    if (changedNode && "position" in changedNode && changedNode.position) {
-      const updatedNode = {
-        id: changedNode.id,
-        xPos: changedNode.position.x,
-        yPos: changedNode.position.y,
-        source: socket.id,
-      };
-      emitNodeChange(updatedNode);
-    }
-  };
-  //deleting and creating an node received from the server
-  useEffect(() => {
-    socket.on("handleOnNodeCreate", (node: Node) => {
-      setNodes((prevNodes) => [...prevNodes, node]);
-    });
+    const urlRequest = `http://127.0.0.1:5000/api/getRoom`;
 
-    socket.on("handleOnDeleteNode", (id) => {
-      console.log("Deleting node with id:", id); // Debugging log
-
-      setNodes((nodes) => {
-        console.log("Nodes before deletion:", nodes);
-        const updatedNodes = nodes.filter((node) => node.id !== id);
-        console.log("Nodes after deletion:", updatedNodes);
-        return updatedNodes;
+    await axios
+      .post(
+        urlRequest,
+        {
+          roomName,
+          getRoomPass,
+        },
+        {
+          headers: {
+            Authorization: `bearer ${token}`,
+          },
+        }
+      )
+      .then((res) => {
+        if (res.status == 200) {
+          const roomID = res.data.roomID;
+          router.push("/whiteboard");
+          socket.emit("join", { room: roomID });
+        }
+      })
+      .catch((error: AxiosError) => {
+        console.log(error);
+        const errorMessage = (error.response?.data as { msg: string })?.msg;
+        setError(errorMessage);
       });
-    });
-
-    return () => {
-      socket.off("handleOnNodeCreate");
-      socket.off("handleOnDeleteNode");
-    };
-  }, [setNodes, socket]);
-  //updating the node props
-
-  type newProps = {
-    id: string;
-    size: {
-      width: number | null | undefined;
-      height: number | null | undefined;
-    };
-    rotation: number;
   };
+  const handleCreateRoom = async (event: FormEvent) => {
+    event.preventDefault();
+    const formData = new FormData(event.target as HTMLFormElement);
+    const createRoomID = formData.get("createRoomID") as string;
+    const getRoomPass = formData.get("roomPass") as string;
 
-  useEffect(() => {
-    const handlePropsChange = ({ id, size, rotation }: newProps) => {
-      setNodes((nodes) =>
-        nodes.map((node) => {
-          if (node.id === id) {
-            const updatedNode = {
-              ...node,
-              width: size.width,
-              height: size.height,
-              style: {
-                ...node.style,
-                rotate: `${rotation}deg`,
+    console.log(getRoomPass, createRoomID, "somethign aint right");
+    const urlRequest = "http://127.0.0.1:5000/api/room/new";
 
-              },
-            };
-            return updatedNode;
-          }
-          return node;
-        })
-      );
-    };
-
-    socket.on("handlePropsChange", handlePropsChange);
-
-    // Clean up the event listener when the component unmounts or re-renders
-    return () => {
-      socket.off("handlePropsChange", handlePropsChange);
-    };
-  }, [socket, setNodes]);
-
-  //the context menu for each node to be able to
-  const onNodeContextMenu: NodeMouseHandler = useCallback(
-    (event, node) => {
-      event.preventDefault();
-
-      if (!ref.current) return;
-      const pane: DOMRect = ref.current.getBoundingClientRect();
-
-      setContextMenu({
-        id: node.id,
-        top: event.clientY < pane.height - 200 ? event.clientY : false,
-        left: event.clientX < pane.width - 200 ? event.clientX : false,
-        right:
-          event.clientX >= pane.width - 200
-            ? pane.width - event.clientX
-            : false,
-        bottom:
-          event.clientY >= pane.height - 200
-            ? pane.height - event.clientY
-            : false,
-        //setContextMenu,
+    await axios
+      .post(
+        urlRequest,
+        {
+          roomName: createRoomID,
+          roomPass: getRoomPass,
+        },
+        {
+          headers: {
+            Authorization: `bearer ${token}`,
+          },
+        }
+      )
+      .then((res) => {
+        if (res.status == 200) {
+          const roomID = res.data.roomID;
+          socket.emit("join", { room: roomID });
+          router.push("/whiteboard");
+        }
+      })
+      .catch((error: AxiosError) => {
+        console.log(error);
+        const errorMessage = (error.response?.data as { msg: string })?.msg;
+        setError(errorMessage);
       });
-    },
-    [setContextMenu]
-  );
-
-  const onPanelClick = useCallback(() => {
-    setContextMenu(null);
-  }, [setContextMenu]);
+  };
 
   return (
-    <div className="h-[100vh]">
-      <ReactFlowProvider>
-        <ReactFlow
-          ref={ref}
-          nodes={nodes}
-          nodeTypes={nodeTypes}
-          onNodesChange={onNodesChange}
-          onNodeContextMenu={onNodeContextMenu}
-          onPaneClick={onPanelClick}
-          fitView
-          panOnScroll
-          selectionOnDrag
-          panOnDrag={panOnDrag}
-          selectionMode={SelectionMode.Partial}
-        >
-          <MiniMap />
-          <UtilityBar />
-          <Background />
-          <Controls />
-        </ReactFlow>
-        {contextMenu && (
-          <SetMenu {...contextMenu} setContextMenu={setContextMenu} />
-        )}
-      </ReactFlowProvider>
+    <div className="flex flex-col items-center justify-center h-screen gap-4">
+      {error && <p className="text-red-500">{error}</p>}
+      <JoinRoomForm handleRoomJoin={handleRoomJoin} />
+      <CreateRoomForm handleCreateRoom={handleCreateRoom} />
     </div>
   );
-};
+}
 
 export default App;
+
+function JoinRoomForm({
+  handleRoomJoin,
+}: {
+  handleRoomJoin: (event: FormEvent) => void;
+}) {
+  return (
+    <div>
+      <form
+        onSubmit={handleRoomJoin}
+        className="flex flex-col items-center gap-4"
+      >
+        <input
+          type="text"
+          className="bg-slate-200 rounded-md"
+          name="roomName"
+          id="roomName"
+          placeholder="Enter room name"
+        />
+        <input
+          type="text"
+          className="bg-slate-200 rounded-md"
+          name="roomPass"
+          id="RoomPass"
+          placeholder="Enter room pass"
+        />
+        <button className="bg-red-500 rounded-md w-32 h-12 p-3">
+          Join Room
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function CreateRoomForm({
+  handleCreateRoom,
+}: {
+  handleCreateRoom: (event: FormEvent) => void;
+}) {
+  return (
+    <div>
+      <form
+        onSubmit={handleCreateRoom}
+        className="flex flex-col items-center gap-4"
+      >
+        <input
+          type="text"
+          className="bg-slate-200 rounded-md"
+          name="createRoomID"
+          id="createRoomID"
+          placeholder="Enter room code"
+        />
+
+        <input
+          type="text"
+          className="bg-slate-200 rounded-md"
+          name="roomPass"
+          id="RoomPass"
+          placeholder="Enter room pass"
+        />
+        <button className="bg-red-500 rounded-md w-32 h-12 p-3">
+          Create Room
+        </button>
+      </form>
+    </div>
+  );
+}

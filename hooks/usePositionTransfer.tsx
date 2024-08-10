@@ -1,8 +1,8 @@
 // src/hooks/useSocket.ts
 
-import { useEffect, useState, useRef } from 'react';
-import { ConnectOnSocket } from '../utils/connectOnSocket';
-import { Node } from 'reactflow';
+import { useEffect, useState, useRef } from "react";
+import { ConnectOnSocket } from "@/utils/sockets/connectOnSocket";
+import { Node } from "reactflow";
 
 type CardPositionProps = {
   xPos: number;
@@ -11,22 +11,23 @@ type CardPositionProps = {
   source?: string;
 };
 
-export const useSocket = (setNodes: React.Dispatch<React.SetStateAction<Node[]>>) => {
-  const socket = ConnectOnSocket();
+export const useSocket = (
+  setNodes: React.Dispatch<React.SetStateAction<Node[]>>
+) => {
+  const { socket } = ConnectOnSocket();
   const [data, setData] = useState<CardPositionProps | null>(null);
   const isServerUpdate = useRef(false);
-
   useEffect(() => {
-    socket.on('handleCardPosition', (cardPosition: CardPositionProps) => {
+    socket.on("handleCardPosition", (cardPosition: CardPositionProps) => {
       if (cardPosition.source === socket.id) return;
 
       isServerUpdate.current = true;
       setData(cardPosition);
-      console.log('Data received from server:', cardPosition);
+      console.log("Data received from server:", cardPosition);
     });
 
     return () => {
-      socket.off('handleCardPosition');
+      socket.off("handleCardPosition");
     };
   }, [socket]);
 
@@ -49,9 +50,9 @@ export const useSocket = (setNodes: React.Dispatch<React.SetStateAction<Node[]>>
     }
   }, [data, setNodes]);
 
-  const emitNodeChange = (changedNode: CardPositionProps) => {
-    socket.emit('updateCardPosition', changedNode);
+  const emitNodeChange = ({ source, id, xPos, yPos }: CardPositionProps) => {
+    socket.emit("updateCardPosition", { source, id, xPos, yPos });
   };
 
-  return { isServerUpdate, emitNodeChange , socket};
+  return { isServerUpdate, emitNodeChange, socket };
 };

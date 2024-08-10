@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { Node } from "reactflow";
-import { ConnectOnSocket } from "../connectOnSocket";
+import { ConnectOnSocket } from "../sockets/connectOnSocket";
 
 type CreateElementProps = {
   typeOfNode: string;
@@ -11,15 +11,12 @@ type CreateElementProps = {
 let yPos = 100;
 let xPos = 0;
 
-const socket = ConnectOnSocket();
-
+const { socket } = ConnectOnSocket();
 export function CreateElement({
   typeOfNode,
   setNodes,
   nodes,
 }: CreateElementProps) {
-  console.log(nodes);
-
   yPos += 10;
   xPos += 10;
   const newNode = {
@@ -31,6 +28,7 @@ export function CreateElement({
     },
     data: { label: "drag me!" },
   };
+
   setNodes(() => [...nodes, newNode]);
-  socket.emit("handleOnNodeCreate", newNode);
+  socket.emit("handleOnNodeCreate", { newNode });
 }

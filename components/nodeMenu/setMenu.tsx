@@ -1,7 +1,8 @@
 // /components/ContextMenu.tsx
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useReactFlow } from "reactflow";
-import { ConnectOnSocket } from "@/utils/connectOnSocket";
+import { ConnectOnSocket } from "@/utils/sockets/connectOnSocket";
+import { Roboto_Mono } from "next/font/google";
 
 type SetContextMenuProps = {
   id: string;
@@ -18,7 +19,7 @@ interface ContextMenuProps extends SetContextMenuProps {
   [key: string]: any;
 }
 
-const socket = ConnectOnSocket();
+const { socket } = ConnectOnSocket();
 
 const ContextMenu: React.FC<ContextMenuProps> = ({
   id,
@@ -31,9 +32,8 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 }) => {
   const { setNodes } = useReactFlow();
   const ref = useRef<HTMLDivElement | null>(null);
-
   const deleteNode = useCallback(() => {
-    socket.emit("handleOnDeleteNode", id);
+    socket.emit("handleOnDeleteNode", { id: id });
     console.log(id, ": id of the node that is gonna deleted ");
     setNodes((nodes) => {
       console.log(nodes);
